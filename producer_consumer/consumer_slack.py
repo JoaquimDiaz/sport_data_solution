@@ -171,7 +171,6 @@ def notifier_flow(ip="localhost", port=9092, topic="strava-data"):
             # 2️⃣ Fan‑out notification tasks
             try:
                 send_slack_message.submit(activity, full_name)
-                post_strava_comment.submit(activity, full_name)
             except Exception as exc:
                 create_failure_artifact(activity.json(indent=2), str(exc))
 

@@ -1,22 +1,3 @@
-"""
-Kafka → Slack notifier **plus** Strava in‑app comments
-──────────────────────────────────────────────────────
-• Prefect‑powered  
-• Looks up the employee’s *prenom / nom* in the company RH table  
-• Posts a congratulatory Slack message that both tags the user and shows the
-  friendly name  
-• Adds a public comment under the Strava activity itself  
-• Validation / API failures are surfaced as Prefect artifacts at the **flow**
-  level
-
-Environment variables required
-──────────────────────────────
-REDPANDA_EXTERNAL_HOST, REDPANDA_EXTERNAL_PORT, TOPIC  
-POSTGRES_HOST, POSTGRES_PORT, POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD  
-SLACK_BOT_TOKEN, SLACK_CHANNEL_ID  
-STRAVA_TOKEN   (personal access token with `activity:write`)  
-"""
-
 # ───────────────────────────── Imports ─────────────────────────────
 from argparse import ArgumentParser
 from datetime import datetime, timezone
@@ -44,7 +25,6 @@ logging.basicConfig(level=logging.INFO)
 
 SLACK_TOKEN   = os.getenv("SLACK_BOT_TOKEN")
 SLACK_CHANNEL = os.getenv("SLACK_CHANNEL_ID")
-STRAVA_TOKEN  = os.getenv("STRAVA_TOKEN")
 
 GENERIC_MESSAGES = [
     "🏅  Great job, <@{name}>! Keep it up!",
@@ -130,14 +110,10 @@ def post_strava_comment(activity, full_name):
     Add a ‘Nice effort!’ comment directly on the Strava activity.
     """
     logger = get_run_logger()
-    if not STRAVA_TOKEN:
-        logger.warning("STRAVA_TOKEN missing – skipping comment")
-        return
 
     comment_text = f"👏 Nice effort, {full_name}!"
     url          = f"https://www.strava.com/api/v3/activities/{activity.id}/comments"
-    headers      = {"Authorization": f"Bearer {STRAVA_TOKEN}"}
-    resp         = requests.post(url, headers=headers,
+    resp         = requests.post(url,
                                  json={"text": comment_text}, timeout=10)
 
     if resp.status_code != 201:
